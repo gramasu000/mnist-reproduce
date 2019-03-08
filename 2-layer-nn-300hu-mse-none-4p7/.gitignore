@@ -1,0 +1,5 @@
+venv
+assets
+training-result-*
+eval-result-*
+predict-result-*
