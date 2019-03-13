@@ -1,4 +1,3 @@
-# :q
-An attempt to reproduce a particular neural network result applied on MNIST dataset.
+# MNIST 2 layer Neural Network 
 
 ## To use
