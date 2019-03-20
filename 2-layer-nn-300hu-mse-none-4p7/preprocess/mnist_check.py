@@ -17,6 +17,15 @@ _MNIST_NUM_EXAMPLES = {
     "test": 10000
 }
 
+DIR = "assets"
+
+MNIST_FILENAMES = {
+    "train_image": "train-images-idx3-ubyte",
+    "test_image": "t10k-images-idx3-ubyte",
+    "train_label": "train-labels-idx1-ubyte",
+    "test_label": "t10k-labels-idx1-ubyte"
+}
+
 def _correct_size(f, use, type):
     correct_fsize = _MNIST_SIZES[f"{use}_{type}"]
     f.seek(0, os.SEEK_END)

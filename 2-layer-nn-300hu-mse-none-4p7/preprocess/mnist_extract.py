@@ -12,18 +12,20 @@ def _extract_images(f):
     np_array = np.empty((num_examples, num_feat))    
     for i in num_examples:
         for j in num_feat:
-            np_array[i,j] = float(int.from_bytes(f.read(1)))
+            pxl_val = int.from_bytes(f.read(1), byteorder="big", signed=False)
+            np_array[i,j] = float(pxl_val)
     return np_array
 
 def _extract_labels(f):
     f.seek(4, os.SEEK_SET)
     num_examples = int.from_bytes(f.read(4))
-    np_array = np.empty((num_examples,))    
+    np_array = np.zeros((num_examples, 10))    
     for i in num_examples:
-        np_array[i] = float(int.from_bytes(f.read(1)))
+        label_int = int.from_bytes(f.read(1), byteorder="big", signed=False)
+        np_array[i, label_int] = 1
     return np_array
 
-def extract_all(file_path):
+def extract(file_path):
     with open(file_path, "rb") as f:
         use, type = check_file(f)
         if type is "image":
