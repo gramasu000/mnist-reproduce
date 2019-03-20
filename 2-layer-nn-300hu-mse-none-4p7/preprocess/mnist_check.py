@@ -17,13 +17,23 @@ _MNIST_NUM_EXAMPLES = {
     "test": 10000
 }
 
-DIR = "assets"
+_MNIST_DIMENSIONS = {
+    "image": 784,
+    "label": 10
+}
+
+_MNIST_OFFSETS = {
+    "image": 16,
+    "label": 8
+}
+
+_DIR = "assets"
 
 MNIST_FILENAMES = {
-    "train_image": "train-images-idx3-ubyte",
-    "test_image": "t10k-images-idx3-ubyte",
-    "train_label": "train-labels-idx1-ubyte",
-    "test_label": "t10k-labels-idx1-ubyte"
+    "train_image": _DIR + os.sep + "train-images-idx3-ubyte",
+    "test_image": _DIR + os.sep + "t10k-images-idx3-ubyte",
+    "train_label": _DIR + os.sep + "train-labels-idx1-ubyte",
+    "test_label": _DIR + os.sep + "t10k-labels-idx1-ubyte"
 }
 
 def _correct_size(f, use, type):
@@ -51,9 +61,17 @@ def _is_mnist(f, use, type):
         and _correct_magic_num(f, type) 
         and _correct_num_examples(f, use)
 
-def check_file(f):
+def _check_file(f):
     for use in ["train", "test"]:
         for type in ["image", "label"]:
             if _is_mnist(f, use, type):
                 return use, type
     return None, None
+
+def check_mnist():
+    for key, filepath in MNIST_FILENAMES:
+        with open(filepath, "rb") as f:
+            correct_key = "{}_{}".format(*_check_file(f))
+            if key is not correct_key
+                return False
+    return True
