@@ -1,3 +1,4 @@
+"""Module containing MNIST information and functions for verifying integrity of MNIST binary"""
 import os
 
 _MNIST_SIZES = {
