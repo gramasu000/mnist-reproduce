@@ -7,7 +7,9 @@ batch data in numpy form
 import os
 import numpy as np
 
-from mnist_check import _MNIST_SIZES, _MNIST_NUM_EXAMPLES, _MNIST_DIMENSIONS, _MNIST_OFFSETS
+from .mnist_info import MNIST_SIZES, MNIST_NUM_EXAMPLES,\
+                         MNIST_DIMENSIONS, MNIST_OFFSETS
+from ..utils.log import LOG
 
 class MnistExtractor:
     """A class to extract MNIST data
@@ -29,59 +31,61 @@ class MnistExtractor:
             number_of_examples must be same for both 
             image_filepath and label_filepath
         """
+        LOG.info(f"Initialized MnistExtractor Object - Opened files {image_filepath} and {label_filepath}")
         self.fimage = open(image_filepath, "rb")
         self.flabel = open(label_filepath, "rb")
 
-    def _extract_image_batch(self, start, end):
+    def _extract_image_batch(self, list_of_indices):
         """Read batch image data into numpy array (flattened)
 
         Args:
-            start (int) : Index of first example in batch
-            end (int) : Index of last example in batch + 1 (first example not in batch)
+            list_of_indices (list): List of indices of examples in batch
         
         Returns:
-            numpy.ndarray : Flattened (C-style) array of batch image data - shape: (end-start, 784)
+            numpy.ndarray: Flattened (C-style) array of batch image data - shape: (len(list_of_indices), 784)
         """ 
-        np_array = np.empty((end-start, _MNIST_DIMENSIONS["image"]))
-        self.fimage.seek(_MNIST_OFFSETS["image"] + start * _MNIST_DIMENSION["image"])
-        for i in range(end-start):
-            for j in range(num_feat):
-                pxl_val = int.from_bytes(self.fimage.read(1), 
-                                    byteorder="big", signed=False)
+        batch_size = len(list_of_indices)
+        np_array = np.empty((batch_size, MNIST_DIMENSIONS["image"]))
+        for i in list_of_indices:
+            self.fimage.seek(MNIST_OFFSETS["image"] + i*MNIST_DIMENSION["image"], os.SEEK_SET)
+            for j in range(MNIST_DIMENSIONS["image"]):
+                pxl_val = int.from_bytes(self.fimage.read(1), byteorder="big", signed=False)
                 np_array[i,j] = float(pxl_val)
+        LOG.debug(f"Extracting flattened image batch - {list_of_indices}")
         return np_array
                  
-    def _extract_label_batch(self, start, end):
+    def _extract_label_batch(self, list_of_indices):
         """Read batch label data to numpy array (one-hot encoded)
 
         Args:
-            start (int) : Index of first example in batch
-            end (int) : Index of last example in batch + 1 (first example not in batch)
+            list_of_indices (list): List of indices of examples in batch
             
         Returns:
-            numpy.ndarray : One-hot encoded array of batch label data - shape: (end-start, 10)
-        """ 
-        np_array = np.zeros((end-start, _MNIST_DIMENSIONS["label"]))
-        self.flabel.seek(_MNIST_OFFSETS["label"] + start)
-        for i in range(end-start):
-            label_int = int.from_bytes(self.flabel.read(1), 
-                                    byteorder="big", signed=False)
+            numpy.ndarray: One-hot encoded array of batch label data - shape: (len(list_of_indices), 10)
+        """
+        batch_size = len(list_of_indices)
+        np_array = np.zeros((batch_size, MNIST_DIMENSIONS["label"]))
+        for i in list_of_indices:
+            self.flabel.seek(MNIST_OFFSETS["label"] + i, os.SEEK_SET)
+            label_int = int.from_bytes(self.flabel.read(1), byteorder="big", signed=False)
             np_array[i, label_int] = 1
+        LOG.debug(f"Extracting one-hot-encoded label batch ({start}, {end})")
         return np_array
 
-    def extract_batch(self, start, end):
+    def extract_batch(self, list_of_indices):
         """Read and return batch data - (images, labels)
         
         Args:
-            start (int) : Index of first example in batch
-            end (int) : Index of last example in batch + 1 (first example not in batch)
+            list_of_indices (list): List of indices of examples in batch
         
         Returns:
             numpy.ndarray, numpy.ndarray : batch image data, batch label data  
         """
-        return _extract_image_batch(self, start, end), _extract_label_batch(self, start, end)
+        LOG.info(f"Extracting a image/label batch ({start}, {end})")
+        return _extract_image_batch(self, list_of_indices), _extract_label_batch(self, list_of_indices)
 
     def __del__(self):
         """Closes file objects"""
+        LOG.info("Destroying MnistExtractor - Closing file objects for {self.fi.name} and {self.fl.name}")
         self.fi.close()
         self.fl.close()
