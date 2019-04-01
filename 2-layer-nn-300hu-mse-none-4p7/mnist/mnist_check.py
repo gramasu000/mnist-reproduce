@@ -9,7 +9,7 @@ import hashlib
 
 from .mnist_info import MNIST_SHA3_512, MNIST_SIZES, MNIST_MAGIC_NUM,\
                         MNIST_NUM_EXAMPLES, MNIST_FILENAMES 
-
+from ..utils.log import LOG
 
 def _correct_sha3_512(f, use, type):
     """Checks the MNIST binary's SHA3-512 hash
@@ -26,6 +26,10 @@ def _correct_sha3_512(f, use, type):
     correct_digest = MNIST_SHA3_512["{}_{}".format(use, type)]
     m = hashlib.sha3_512()
     m.update(f.read())
+    if m.hexdigest() is correct_digest:
+        LOG.debug(f"{f.name} SHA3-512 corresponds to MNIST ({use}, {type})")
+    else:
+        LOG.debug(f"{f.name} SHA3-512 does not correspond to MNIST ({use}, {type})") 
     return m.hexdigest() is correct_digest
 
 
@@ -45,6 +49,10 @@ def _correct_size(f, use, type):
     f.seek(0, os.SEEK_END)
     fsize = f.tell()
     f.seek(0, os.SEEK_SET)
+    if fsize is correct_fsize:
+        LOG.debug(f"{f.name} file size corresponds to MNIST ({use}, {type})")
+    else:
+        LOG.debug(f"{f.name} file size does not correspond to MNIST ({use}, {type})")
     return fsize is correct_fsize
 
 
@@ -62,7 +70,12 @@ def _correct_magic_num(f, type):
     correct_fmagicnum = MNIST_MAGIC_NUM[type]
     fmagicnum = int.from_bytes(f.read(4), "big")
     f.seek(0, os.SEEK_SET)
+    if fmagicnum is correct_fmagicnum:
+        LOG.debug(f"{f.name} magic number corresponds to MNIST {type}")
+    else:
+        LOG.debug(f"{f.name} magic number does not correspond to MNIST {type}")
     return fmagicnum is correct_fmagicnum
+
 
 def _correct_num_examples(f, use):
     """Checks the number of dataset examples in MNIST binary
@@ -79,7 +92,12 @@ def _correct_num_examples(f, use):
     f.seek(4, os.SEEK_SET)
     fnumexamples = int.from_bytes(f.read(4), "big")
     f.seek(0, os.SEEK_SET)
+    if fnumexamples is correct_fnumexamples:
+        LOG.debug(f"{f.name} number of dataset examples corresponds to MNIST {use}")
+    else:
+        LOG.debug(f"{f.name} number of dataset examples does not correspond to MNIST {use}")
     return fnumexamples is correct_fnumexamples
+
 
 def _is_mnist(f, use, type):
     """Checks the integrity of a particular MNIST binary
@@ -96,10 +114,17 @@ def _is_mnist(f, use, type):
         bool: True if binary file's information
             corresponds to mnist_info specification. 
     """
-    return _correct_sha3_512(f, use, type)
-        and _correct_size(f, use, type) 
-        and _correct_magic_num(f, type) 
-        and _correct_num_examples(f, use)
+    LOG.debug(f"{f.name} - Checking whether this corresponds to MNIST ({use}, {type})")
+    mnist_match = _correct_sha3_512(f, use, type) 
+                    and _correct_size(f, use, type) 
+                    and _correct_magic_num(f, type) 
+                    and _correct_num_examples(f, use)
+    if mnist_match:
+        LOG.debug(f"{f.name} matches MNIST ({use}, {type})")
+    else:
+        LOG.debug(f"{f.name} does not match MNIST ({use}, {type})") 
+    return mnist_match
+
 
 def _check_file(f):
     """Checks whether binary file corresponds with an MNIST dataset
@@ -115,14 +140,16 @@ def _check_file(f):
     
     Returns:
         str, str : use, type
-
     """
      
     for use in ["train", "test"]:
         for type in ["image", "label"]:
             if _is_mnist(f, use, type):
+                LOG.info(f"{f.name} matches MNIST ({use}, {type})")
                 return use, type
+    LOG.warning(f"{f.name} not recognized as MNIST data")
     return None, None
+
 
 def check_mnist():
     """Runs _check_file on four specific binary files in assets/ directory
@@ -139,5 +166,7 @@ def check_mnist():
         with open(filepath, "rb") as f:
             correct_key = "{}_{}".format(*_check_file(f))
             if key is not correct_key
+                LOG.warning("MNIST_FILENAMES not accurate - Do not extract.")
                 return False
+    LOG.info("MNIST_FILENAMES have been verified - MNIST extraction can begin.")
     return True
