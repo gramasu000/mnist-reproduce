@@ -5,6 +5,8 @@ for the MNIST dataset. Therefore, we call it the FourPointSevenNet.
 """
 import numpy as np
 
+from ..utils.log import LOG
+
 class FourPointSevenNet:
     """A two-layer neural network (to be trained on MNIST)
 
@@ -16,6 +18,7 @@ class FourPointSevenNet:
 
     def __init__(self):
         """Sets the layer dimensions"""
+        LOG.info("Initialize FourPointSevenNet - 784 x 300 x 10 dense network")
         self.input_size = 784
         self.hidden_size = 300
         self.output_size = 10
@@ -25,6 +28,7 @@ class FourPointSevenNet:
 
         We call this method when training a network from scratch
         """
+        LOG.info("Initialize weights of FourPointSevenNet - Random Initialization")
         self.weights = {
             "w1": np.random.randn((self.input_size, self.hidden_size)),
             "b1": np.random.randn((1, self.hidden_size)),
@@ -41,6 +45,7 @@ class FourPointSevenNet:
         Args:
             weights (dict) : A dictionary of numpy arrays with keys "w1", "b1", "w2", "b2"
         """
+        LOG.info("Initialize weights of FourPointSevenNet - From Checkpoint")
         self.weights = weights
 
     def learning_rate(self, epoch):
@@ -69,6 +74,7 @@ class FourPointSevenNet:
             inputs (numpy.ndarray) - Flattened (C-style) image data (number_of_examples, 784)
             labels (numpy.ndarray) - One-hot encoded label data (number_of_examples, 10) [or scalar 0]
         """
+        LOG.debug("FourPointSevenNet - Forward Propagation")
         h1 = np.matmul(inputs, self.weights["w1"]) + self.weights["b1"]
         a1 = np.greater(h1, 0) * h1
         h2 = np.matmul(r1, self.weights["w2"]) + self.weights["b2"]
@@ -96,8 +102,13 @@ class FourPointSevenNet:
         Returns:
             preds (numpy.ndarray) - A vector of predictions [0-9] (number_of_examples, 1)
         """
-        self._forward_prop(inputs, 0)
-        preds = np.argmax(self.fprop["a2"], axis=1)
+        LOG.debug("FourPointSevenNet - Prediction")
+        h1 = np.matmul(inputs, self.weights["w1"]) + self.weights["b1"]
+        a1 = np.greater(h1, 0) * h1
+        h2 = np.matmul(r1, self.weights["w2"]) + self.weights["b2"]
+        a2 = np.exp(h2)
+        a2 /= np.sum(a2, axis=1)
+        preds = np.argmax(a2, axis=1)
         return preds
 
     def _compute_gradients(self, inputs, labels):
@@ -111,6 +122,7 @@ class FourPointSevenNet:
             inputs (numpy.ndarray) - Flattened (C-style) image data (number_of_examples, 784)
             labels (numpy.ndarray) - One-hot encoded label data (number_of_examples, 10) [or scalar 0]
         """
+        LOG.debug("FourPointSevenNet - BackPropogation")
         dh2 = self.fprop["a2"] - labels
         dw2 = np.matmul(self.fprop["a1"].T, dh2)
         db2 = dh2
@@ -134,6 +146,7 @@ class FourPointSevenNet:
         Args:
             epoch (int) - How many times the training cycle has been iterated
         """
+        LOG.debug("FourPointSevenNet - Gradient Descent")
         for key in self.weights:
             bkey = "d" + key
             self.weights[key] -= self.learning_rate(epoch)*self.bprop[bkey]
@@ -148,6 +161,7 @@ class FourPointSevenNet:
             inputs (numpy.ndarray) - Flattened (C-style) image data (number_of_examples, 784)
             labels (numpy.ndarray) - One-hot encoded label data (number_of_examples, 10) [or scalar 0]
         """
+        LOG.info(f"FourPointSevenNet - Training Iteration {epoch}")
         self._forward_prop(inputs, labels)
         self._compute_gradients(inputs, labels)
         self._eval_grad_descent(epoch)
