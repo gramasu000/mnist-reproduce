@@ -1,5 +1,7 @@
 venv
 assets
+logs
+__pycache__
 training-result-*
 eval-result-*
 predict-result-*

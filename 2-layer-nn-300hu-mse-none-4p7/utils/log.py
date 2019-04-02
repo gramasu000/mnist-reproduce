@@ -3,7 +3,7 @@
 import logging
 
 
-LOG = None
+LOG = logging.getLogger()
 """module-level global logger, uninitialized"""
 
 def init_logger(log_filepath, log_level):
@@ -13,8 +13,6 @@ def init_logger(log_filepath, log_level):
         log_filepath (str): Filepath of log file
         log_level (int): Log levels (Ex. logging.DEBUG, logging.INFO, logging.WARNING, etc.) 
     """
-    global LOG
     logging.basicConfig(format="%(asctime)s, %(name)-12s, %(levelname)-8s: %(message)s",
                         level=log_level,
-                        handlers=[logging.FileWriter(log_filepath), logging.StreamWriter()])
-    LOG = logging.getLogger()
+                        handlers=[logging.FileHandler(log_filepath), logging.StreamHandler()])

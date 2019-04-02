@@ -9,7 +9,7 @@ import hashlib
 
 from .mnist_info import MNIST_SHA3_512, MNIST_SIZES, MNIST_MAGIC_NUM,\
                         MNIST_NUM_EXAMPLES, MNIST_FILENAMES 
-from ..utils.log import LOG
+from utils.log import LOG
 
 def _correct_sha3_512(f, use, type):
     """Checks the MNIST binary's SHA3-512 hash
@@ -115,10 +115,7 @@ def _is_mnist(f, use, type):
             corresponds to mnist_info specification. 
     """
     LOG.debug(f"{f.name} - Checking whether this corresponds to MNIST ({use}, {type})")
-    mnist_match = _correct_sha3_512(f, use, type) 
-                    and _correct_size(f, use, type) 
-                    and _correct_magic_num(f, type) 
-                    and _correct_num_examples(f, use)
+    mnist_match = _correct_sha3_512(f, use, type) and _correct_size(f, use, type) and _correct_magic_num(f, type) and _correct_num_examples(f, use)
     if mnist_match:
         LOG.debug(f"{f.name} matches MNIST ({use}, {type})")
     else:
@@ -162,10 +159,10 @@ def check_mnist():
         This should return True.
     """
 
-    for key, filepath in MNIST_FILENAMES:
+    for key, filepath in MNIST_FILENAMES.items():
         with open(filepath, "rb") as f:
             correct_key = "{}_{}".format(*_check_file(f))
-            if key is not correct_key
+            if key is not correct_key:
                 LOG.warning("MNIST_FILENAMES not accurate - Do not extract.")
                 return False
     LOG.info("MNIST_FILENAMES have been verified - MNIST extraction can begin.")
