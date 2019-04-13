@@ -94,6 +94,16 @@ class FourPointSevenNet:
             "loss": loss
         }
 
+    def loss(self, inputs, labels):
+        LOG.debug(f"FourPointSevenNet - Loss Calculation")
+        h1 = np.matmul(inputs, self.weights["w1"]) + self.weights["b1"]
+        a1 = np.greater(h1, 0) * h1
+        h2 = np.matmul(a1, self.weights["w2"]) + self.weights["b2"]
+        a2 = np.exp(h2)
+        a2 = a2 / np.sum(a2, axis=1)[:, None]
+        loss = np.sum(-np.log(a2) * labels)
+        return loss
+
     def predict(self, inputs):
         """Predict classification for input images
 
